@@ -1,8 +1,9 @@
 #include <Wire.h>
+#include "wiring_private.h"
+#include "RTClib.h"
 #include "Adafruit_MPRLS.h"
 #include <rgb_lcd.h>
 #include "HoneywellZephyrI2C.h"
-//#include <RTClib.h>
 
 
 #define RESET_PIN  -1  // set to any GPIO pin # to hard-reset on begin()
