@@ -14,7 +14,7 @@ Adafruit_MPRLS mpr = Adafruit_MPRLS(RESET_PIN, EOC_PIN);
 ZephyrFlowRateSensor sensor(0x49, 50, ZephyrFlowRateSensor::SCCM); // construct a 50 SCCM sensor with address 0x49
 
 //// Real Time Clock
-//RTC_DS1307 rtc;
+RTC_DS1307 rtc;
 
 // LCD SETUP
 rgb_lcd lcd;
@@ -109,22 +109,22 @@ bool Mode; // if true AC else Full
 void setup() {
   Serial.begin(115200);
 
-//  //RTC SET UP
-//    if (! rtc.begin()) {
-//    Serial.println("Couldn't find RTC");
-//    Serial.flush();
-//    while (1) delay(10);
-//  }
-//  
-//  if (! rtc.isrunning()) {
-//    Serial.println("RTC is NOT running, let's set the time!");
-//    // When time needs to be set on a new device, or after a power loss, the
-//    // following line sets the RTC to the date & time this sketch was compiled
-//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-//    // This line sets the RTC with an explicit date & time, for example to set
-//    // January 21, 2014 at 3am you would call:
-//    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
-//  }
+  //  //RTC SET UP
+  if (! rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    Serial.flush();
+    while (1) delay(10);
+  }
+
+  if (! rtc.isrunning()) {
+    Serial.println("RTC is NOT running, let's set the time!");
+    // When time needs to be set on a new device, or after a power loss, the
+    // following line sets the RTC to the date & time this sketch was compiled
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // This line sets the RTC with an explicit date & time, for example to set
+    // January 21, 2014 at 3am you would call:
+    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+  }
 
 
   // FLOWRATE SENSOR SETUP
@@ -172,13 +172,15 @@ void setup() {
 }
 
 void loop() {
-//   //RTC CALL E.g.
-//   DateTime now = rtc.now();
-//    
-//    Serial.print(now.minute(), DEC);
-//    Serial.print(':');
-//    Serial.print(now.second(), DEC);
-//    Serial.println();
+  //   //RTC CALL E.g.
+  DateTime now = rtc.now();
+  Serial.print(now.hour(), DEC);
+  Serial.print(':');
+  Serial.print(now.minute(), DEC);
+  Serial.print(':');
+  Serial.print(now.second(), DEC);
+  Serial.println();
+
 
   // CHECK POTS
   potIE = analogRead(pot2);
@@ -210,19 +212,19 @@ void loop() {
       Mode = true;
     } else if (full == HIGH) {
       Mode = false;
-    } 
-  }else {
-      SystemRunning = false;
-      Serial.println("off");
-      digitalWrite(blue, LOW);
-      digitalWrite(yell, LOW);
-      digitalWrite(red1, LOW);
-      digitalWrite(red2, LOW);
-      digitalWrite(red3, LOW);
-      digitalWrite(red4, LOW);
-      digitalWrite(airvalve, LOW);
-      digitalWrite(vacvalve, LOW);
     }
+  } else {
+    SystemRunning = false;
+    Serial.println("off");
+    digitalWrite(blue, LOW);
+    digitalWrite(yell, LOW);
+    digitalWrite(red1, LOW);
+    digitalWrite(red2, LOW);
+    digitalWrite(red3, LOW);
+    digitalWrite(red4, LOW);
+    digitalWrite(airvalve, LOW);
+    digitalWrite(vacvalve, LOW);
+  }
 
   if (SystemRunning == true) {
 
