@@ -298,7 +298,7 @@ void loop() {
       time_breath = 0; // amount of time breathing is 0 so far
       multiplier = 3750; //3606
       int i = 0;
-      while (v_calc <= v_set && i < 10) {
+      while (v_calc <= v_set) {
         if (sensor.readSensor() == 0) {
           flowrate = (sensor.flow() + normalize) / 60 * multiplier; // get flowrate from sensor and convert from mL/min to mL/s
           Serial.println(sensor.flow());
@@ -316,6 +316,9 @@ void loop() {
         //time_breath = time_breath + time_elapsed; // add to counter of how long it took to breathe in
         delay(10);
         time_breath = time_breath + 10;
+        if (i >= 10) {
+          break;
+        }
         i++;
       }
       // Hold
