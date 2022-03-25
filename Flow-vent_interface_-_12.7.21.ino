@@ -282,6 +282,9 @@ void loop() {
       //      normalize = sensor.flow() * -1;
       //    }
       // Mode Setting and LED color
+
+      DateTime starttime = rtc.now();
+      
       Serial.println("full");
       digitalWrite(blue, HIGH);
       digitalWrite(yell, LOW);
@@ -321,6 +324,16 @@ void loop() {
         }
         i++;
       }
+
+      //
+      if(starttime.second + 10  > now.second()){
+        Serial.println(starttime.second);
+        Serial.println("drag: "+ now.second());
+        break;
+        }
+)
+
+
       // Hold
       digitalWrite(airvalve, LOW);
       digitalWrite(vacvalve, LOW);
