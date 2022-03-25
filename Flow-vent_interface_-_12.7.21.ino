@@ -331,8 +331,6 @@ void loop() {
         Serial.println("drag: "+ now.second());
         break;
         }
-)
-
 
       // Hold
       digitalWrite(airvalve, LOW);
