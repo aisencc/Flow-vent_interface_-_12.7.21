@@ -230,9 +230,12 @@ void loop() {
 
     // IE RATIO CALCULATION
     minVol = 0; // arbitrary minimum volume is 0 mL currently
-    maxVol = 2000; // arbitrary maximum volume is 2000 mL currently
+    maxVol = 2000; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
+//    Vol = 500;
     Vol = map(potVol, 0, 1023, minVol, maxVol); // NOTE: minVol and maxVol have not been set yet
+//    BPM = 10;
     BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30
+//    Ex = 2;
     Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6
 
     v_set = Vol; // set volume is just pot volume
@@ -284,7 +287,7 @@ void loop() {
       // Mode Setting and LED color
 
       DateTime starttime = rtc.now();
-      
+
       Serial.println("full");
       digitalWrite(blue, HIGH);
       digitalWrite(yell, LOW);
@@ -304,9 +307,16 @@ void loop() {
       while (v_calc <= v_set) {
         if (sensor.readSensor() == 0) {
           flowrate = (sensor.flow() + normalize) / 60 * multiplier; // get flowrate from sensor and convert from mL/min to mL/s
+          Serial.print("sensor flow");
           Serial.println(sensor.flow());
+
+          Serial.print("flowrate:"); 
           Serial.println(flowrate);
+          
+          Serial.print("BREATH IN:");
           Serial.println(breathlength_in);
+
+          Serial.print("BREATH OUT:");
           Serial.println(breathlength_out);
         }
         //current = millis(); // get current time
@@ -317,21 +327,21 @@ void loop() {
         v_trans = flowrate * 0.01; // determine volume pumped in this time, flow is in mL/s, time_elapsed is in ms, have to multiply by 0.01 to get s
         v_calc = v_calc + v_trans; // add to counter of total volume pumped
         //time_breath = time_breath + time_elapsed; // add to counter of how long it took to breathe in
-        delay(10);
+        delay(100);
         time_breath = time_breath + 10;
         if (i >= 10) {
           break;
         }
         i++;
-      }
 
-      //
-      if(starttime.second + 10  > now.second()){
-        Serial.println(starttime.second);
-        Serial.println("drag: "+ now.second());
-        break;
+
+        //
+        if (starttime.second() + 10  > now.second()) {
+          Serial.println(starttime.second());
+          Serial.println("drag: " + now.second());
+          break;
         }
-
+      }
       // Hold
       digitalWrite(airvalve, LOW);
       digitalWrite(vacvalve, LOW);
