@@ -231,12 +231,20 @@ void loop() {
     // IE RATIO CALCULATION
     minVol = 0; // arbitrary minimum volume is 0 mL currently
     maxVol = 2000; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
-//    Vol = 500;
+    //    Vol = 500;
     Vol = map(potVol, 0, 1023, minVol, maxVol); // NOTE: minVol and maxVol have not been set yet
-//    BPM = 10;
-    BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30
-//    Ex = 2;
-    Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6
+    //    BPM = 10;
+    BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30 (12-16 target with breathing interval 5 seconds)
+    //    Ex = 2;
+    unsigned int Breathing_period = 5000; // 5 seconds
+    unsigned int TargetInhale = 1500; //1.5 second
+    if (BPM != 12) {
+      Breathing_period = 60 / BPM * 1000; // mils of Breathing period
+      Serial.println ("Period = " + char (Breathing_period));
+    }
+
+    Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6 (ratio 2 is target)
+
 
     v_set = Vol; // set volume is just pot volume
 
@@ -293,7 +301,7 @@ void loop() {
       digitalWrite(yell, LOW);
 
       // Inhale
-      //    previous = millis (); // determine time at start of pumping air in
+      unsigned long Inhale = millis (); // determine time at start of pumping air in
       digitalWrite(airvalve, HIGH);
       digitalWrite(vacvalve, LOW);
       digitalWrite(red1, HIGH);
@@ -303,57 +311,40 @@ void loop() {
       v_calc = 0; // start volume pumped in is 0
       time_breath = 0; // amount of time breathing is 0 so far
       multiplier = 3750; //3606
+      unsigned int current = millis();
       int i = 0;
-      while (v_calc <= v_set) {
-        if (sensor.readSensor() == 0) {
-          flowrate = (sensor.flow() + normalize) / 60 * multiplier; // get flowrate from sensor and convert from mL/min to mL/s
-          Serial.print("sensor flow");
-          Serial.println(sensor.flow());
+      while (current - Inhale <= Breathing_period) {
+        while (current - Inhale <= TargetInhale) {
+          if (sensor.readSensor() == 0) {
+            flowrate = (sensor.flow() + normalize) / 60 * multiplier; // get flowrate from sensor and convert from mL/min to mL/s
+            Serial.print("sensor flow");
+            Serial.println(sensor.flow());
 
-          Serial.print("flowrate:"); 
-          Serial.println(flowrate);
-          
-          Serial.print("BREATH IN:");
-          Serial.println(breathlength_in);
+            Serial.print("flowrate:");
+            Serial.println(flowrate);
 
-          Serial.print("BREATH OUT:");
-          Serial.println(breathlength_out);
-        }
-        //current = millis(); // get current time
-        //time_elapsed = current - previous; // determine time in milliseconds from beginning to pump air to now
-        if (flowrate < 0) {
-          flowrate = 0;
-        }
-        v_trans = flowrate * 0.01; // determine volume pumped in this time, flow is in mL/s, time_elapsed is in ms, have to multiply by 0.01 to get s
-        v_calc = v_calc + v_trans; // add to counter of total volume pumped
-        //time_breath = time_breath + time_elapsed; // add to counter of how long it took to breathe in
-        delay(100);
-        time_breath = time_breath + 10;
-        if (i >= 10) {
-          break;
-        }
-        i++;
+          }
+          //time_elapsed = current - previous; // determine time in milliseconds from beginning to pump air to now
+          if (flowrate < 0) {
+            flowrate = 0;
+          }
+          v_trans = flowrate * 100;
+          v_calc = v_calc + v_trans; // add to counter of total volume pumped
+          //time_breath = time_breath + time_elapsed; // add to counter of how long it took to breathe in
+          delay(100);
+          current = millis();
+        }//end Target Inhale
 
 
-        //
-        if (starttime.second() + 10  > now.second()) {
-          Serial.println(starttime.second());
-          Serial.println("drag: " + now.second());
-          break;
-        }
-      }
-      // Hold
+
+        current = millis(); // get current time
+      }// end Inhale target
+      //Hold 1
       digitalWrite(airvalve, LOW);
       digitalWrite(vacvalve, LOW);
       digitalWrite(red1, LOW);
       digitalWrite(red2, LOW);
-      breathlength_hold = breathlength_in - time_breath; // calculate how long left in inhalation to maintain proper IE ratio
-      if (breathlength_hold < 0) {
-        // if inhalation time too long to maintain IE ratio, remove hold time and provide warning.
-        Serial.println("Not enough flow to reach set volume. Please increase airflow or decrease set volume.");
-        breathlength_hold = 0;
-      }
-      delay(breathlength_hold);
+      delay (100); // let valve shut
       // Exhale
       Serial.println("Exhale");
       digitalWrite(airvalve, LOW);
@@ -365,10 +356,27 @@ void loop() {
       Serial.println("B-OUT" +  char(breathlength_out));
       Serial.println("B-IN" + char(breathlength_in));
       Serial.println("B-OUT" + char(breathlength_hold));
+      // Hold
+      digitalWrite(airvalve, LOW);
+      digitalWrite(vacvalve, LOW);
+      digitalWrite(red1, LOW);
+      digitalWrite(red2, LOW);
+      breathlength_hold ( = Inhale + Breathing_Period) - millis();
+      if (breathlength_hold < 0) {
+        breathlength_hold = 0;
+      }
+      //
+      if (starttime.second() + 12  > now.second()) {
+        Serial.println(starttime.second());
+        Serial.println("drag: " + now.second());
+        //5 seconds is period
+        break;
+      }// end of start time break
+      delay(breathlength_hold);
+    }// end of breathing period
+  } //FULL MODE OUT
 
-    } //FULL MODE OUT
-
-  }
+}
 
 
 }
