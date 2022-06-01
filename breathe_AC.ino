@@ -1,5 +1,7 @@
 bool breathe_AC(bool breath) {
- 
+  
+  pressurefunction();
+   
   Serial.println("Breathing in AC MODE!");
   
   if (breath == true ) {

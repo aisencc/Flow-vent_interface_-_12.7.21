@@ -106,6 +106,25 @@ int airvalve = 12;
 bool SystemRunning; // are there any modes selected?
 bool Mode; // if true AC else Full
 
+//DEBOUNCE AC
+int buttonState;             // the current reading from the input pin
+int lastButtonState = LOW;   // the previous reading from the input pin
+
+// the following variables are unsigned longs because the time, measured in
+// milliseconds, will quickly become a bigger number than can be stored in an int.
+unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
+
+//DEBOUNCE FULL
+int buttonStateFULL;             // the current reading from the input pin
+int lastButtonStateFULL = LOW;   // the previous reading from the input pin
+
+// the following variables are unsigned longs because the time, measured in
+// milliseconds, will quickly become a bigger number than can be stored in an int.
+unsigned long lastDebounceTimeFULL = 0;  // the last time the output pin was toggled
+unsigned long debounceDelayFULL = 50;    // the debounce time; increase if the output flickers
+
+
 void setup() {
   Serial.begin(115200);
 
@@ -172,6 +191,9 @@ void setup() {
 }
 
 void loop() {
+   screen();
+  flowratefunction();
+
   //   //RTC CALL E.g.
   DateTime now = rtc.now();
   Serial.print(now.hour(), DEC);
@@ -198,18 +220,53 @@ void loop() {
   Serial.print("pot4 = ");
   Serial.println(potBPM);
 
-  screen();
-  pressurefunction();
-  flowratefunction();
-
   // CHECK MODE
   AC = digitalRead(blueswitch);
   full = digitalRead(yellswitch);
+  
+ //DEBOUNCE AC
+ // If the switch changed, due to noise or pressing:
+  if (AC != lastButtonState) {
+    // reset the debouncing timer
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    // whatever the reading is at, it's been there for longer than the debounce
+    // delay, so take it as the actual current state:
+
+    // if the button state has changed:
+    if (AC != buttonState) {
+      buttonState = AC;
+      }
+    }
+//DEBOUNCE FULL
+     // If the switch changed, due to noise or pressing:
+  if (full != lastButtonStateFULL) {
+    // reset the debouncing timer
+    lastDebounceTimeFULL = millis();
+  }
+
+  if ((millis() - lastDebounceTimeFULL) > debounceDelayFULL) {
+    // whatever the reading is at, it's been there for longer than the debounce
+    // delay, so take it as the actual current state:
+
+    // if the button state has changed:
+    if (full != buttonStateFULL) {
+      buttonStateFULL = full;
+      }
+    }
+     
+
+
+
+  
 
   if ( AC == HIGH || full == HIGH) {
     SystemRunning = true;
     if (AC == HIGH) {
       Mode = true;
+      Serial.print("switched to AC mode");
     } else if (full == HIGH) {
       Mode = false;
     }
@@ -236,12 +293,12 @@ void loop() {
     //    BPM = 10;
     BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30 (12-16 target with breathing interval 5 seconds)
     //    Ex = 2;
-    unsigned int Breathing_period = 5000; // 5 seconds
+    unsigned int Breathing_Period = 5000; // 5 seconds
     unsigned int TargetInhale = 1500; //1.5 second
-    if (BPM != 12) {
-      Breathing_period = 60 / BPM * 1000; // mils of Breathing period
-      Serial.println ("Period = " + char (Breathing_period));
-    }
+
+    Breathing_Period = 60 / BPM * 1000; // mils of Breathing period
+    Serial.println ("Period = " + char (Breathing_Period));
+
 
     Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6 (ratio 2 is target)
 
@@ -254,7 +311,7 @@ void loop() {
     breathlength_in = In_t * 1000; // convert In_t to milliseconds for arudino delay
     breathlength_out = Ex_t * 1000; // convert Ex_T to milliseconds for arduino delay
     //---------------------------------
-
+    //    Mode = false;
 
     if (Mode == true) {
       Serial.println("AC");
@@ -306,6 +363,7 @@ void loop() {
       digitalWrite(vacvalve, LOW);
       digitalWrite(red1, HIGH);
       digitalWrite(red2, LOW);
+      Serial.print("Hello!");
       //delay(100);
 
       v_calc = 0; // start volume pumped in is 0
@@ -313,26 +371,31 @@ void loop() {
       multiplier = 3750; //3606
       unsigned int current = millis();
       int i = 0;
-      while (current - Inhale <= Breathing_period) {
+      while (current - Inhale <= Breathing_Period) {
         while (current - Inhale <= TargetInhale) {
           if (sensor.readSensor() == 0) {
             flowrate = (sensor.flow() + normalize) / 60 * multiplier; // get flowrate from sensor and convert from mL/min to mL/s
-            Serial.print("sensor flow");
-            Serial.println(sensor.flow());
+            //Serial.print("sensor flow");
+            //Serial.print(sensor.flow());
 
-            Serial.print("flowrate:");
-            Serial.println(flowrate);
-
+            //Serial.print("\t flowrate:");
+            //Serial.println(flowrate);
+  Serial.print("while inhaling!");
           }
           //time_elapsed = current - previous; // determine time in milliseconds from beginning to pump air to now
-          if (flowrate < 0) {
-            flowrate = 0;
+          if (flowrate <= 0) {
+            flowrate = flowrate * -1;
+              Serial.print("flowrateeeeee!");
           }
           v_trans = flowrate * 100;
           v_calc = v_calc + v_trans; // add to counter of total volume pumped
+          Serial.print("VCalc\t");
+          Serial.println(v_calc);
           //time_breath = time_breath + time_elapsed; // add to counter of how long it took to breathe in
           delay(100);
           current = millis();
+            Serial.print("vcalc anyone?!");
+          
         }//end Target Inhale
 
 
@@ -361,22 +424,22 @@ void loop() {
       digitalWrite(vacvalve, LOW);
       digitalWrite(red1, LOW);
       digitalWrite(red2, LOW);
-      breathlength_hold ( = Inhale + Breathing_Period) - millis();
+      breathlength_hold = (Inhale + Breathing_Period) - millis();
       if (breathlength_hold < 0) {
         breathlength_hold = 0;
       }
       //
-      if (starttime.second() + 12  > now.second()) {
+      if (starttime.second() + 20  > now.second()) {
         Serial.println(starttime.second());
         Serial.println("drag: " + now.second());
         //5 seconds is period
-        break;
+        Mode = false;
+        return;
       }// end of start time break
       delay(breathlength_hold);
     }// end of breathing period
+    Mode = false;
   } //FULL MODE OUT
-
-}
-
-
+ lastButtonState = AC;
+  lastButtonStateFULL = full;
 }
