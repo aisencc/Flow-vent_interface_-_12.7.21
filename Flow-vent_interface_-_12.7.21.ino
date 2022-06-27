@@ -287,10 +287,12 @@ void loop() {
 
     // IE RATIO CALCULATION
     minVol = 0; // arbitrary minimum volume is 0 mL currently
-    maxVol = 2000; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
+    maxVol = 800; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
     //    Vol = 500;
     Vol = map(potVol, 0, 1023, minVol, maxVol); // NOTE: minVol and maxVol have not been set yet
     //    BPM = 10;
+        Serial.println ("Volume = " + Vol);
+
     BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30 (12-16 target with breathing interval 5 seconds)
     //    Ex = 2;
     unsigned int Breathing_Period = 5000; // 5 seconds
@@ -304,6 +306,8 @@ void loop() {
 
 
     v_set = Vol; // set volume is just pot volume
+    v_set = 400; // set volume is just pot volume
+
 
     In_t = (60 / BPM) / (Ex + 1); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
     Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
@@ -312,7 +316,7 @@ void loop() {
     breathlength_out = Ex_t * 1000; // convert Ex_T to milliseconds for arduino delay
     //---------------------------------
     //    Mode = false;
-
+   screen();
     if (Mode == true) {
       Serial.println("AC");
       digitalWrite(blue, LOW);
@@ -369,9 +373,9 @@ void loop() {
       v_calc = 0; // start volume pumped in is 0
       time_breath = 0; // amount of time breathing is 0 so far
       multiplier = 3750; //3606
-      unsigned int current = millis();
+      unsigned long current = millis();
       int i = 0;
-      while (current - Inhale <= Breathing_Period) {
+     while (current - Inhale <= Breathing_Period) {
         while (current - Inhale <= TargetInhale) {
           if (sensor.readSensor() == 0) {
             flowrate = (sensor.flow() + normalize) / 60 * multiplier; // get flowrate from sensor and convert from mL/min to mL/s
@@ -399,7 +403,7 @@ void loop() {
         }//end Target Inhale
 
 
-
+        //Serial.print("Inhale2");
         current = millis(); // get current time
       }// end Inhale target
       //Hold 1
