@@ -215,7 +215,7 @@ void loop() {
   maxVol = 800; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
   //    Vol = 500;
 
-int  lastVol = Vol;
+  int  lastVol = Vol;
   Vol = map(potVol, 0, 1023, minVol, maxVol); // NOTE: minVol and maxVol have not been set yet
   //    BPM = 10;
 
@@ -224,17 +224,23 @@ int  lastVol = Vol;
   }
   Serial.println ("Volume = " + Vol);
 
+  int  lastBPM = BPM;
   BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30 (12-16 target with breathing interval 5 seconds)
   //    Ex = 2;
+  if (abs(lastBPM - BPM) <= 1) {
+    BPM = lastBPM;
+  }
   unsigned int Breathing_Period = 5000; // 5 seconds
   unsigned int TargetInhale = 1500; //1.5 second
 
   Breathing_Period = 60 / BPM * 1000; // mils of Breathing period
   Serial.println ("Period = " + char (Breathing_Period));
 
-
+  int  lastEx = Ex;
   Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6 (ratio 2 is target)
-
+  if (abs(lastEx - Ex) <= 1) {
+    Ex = lastEx;
+  }
 
   v_set = Vol; // set volume is just pot volume
   v_set = 400; // set volume is just pot volume
@@ -390,13 +396,13 @@ int  lastVol = Vol;
       //    if (sensor.readSensor() == 0) {
       //      normalize = sensor.flow() * -1;
       //    }
-      // Mode Setting and LED color
-      // CHECK POTS
-      potIE = analogRead(pot2);
-      potVol = analogRead(pot1);
-      potSens = analogRead(pot3);
-      potBPM = analogRead(pot4);
-      screen();
+//      // Mode Setting and LED color
+//      // CHECK POTS
+//      potIE = analogRead(pot2);
+//      potVol = analogRead(pot1);
+//      potSens = analogRead(pot3);
+//      potBPM = analogRead(pot4);
+//      screen();
 
       DateTime starttime = rtc.now();
 
