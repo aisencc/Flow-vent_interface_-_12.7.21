@@ -191,7 +191,7 @@ void setup() {
 }
 
 void loop() {
-   screen();
+
   flowratefunction();
 
   //   //RTC CALL E.g.
@@ -210,22 +210,61 @@ void loop() {
   potSens = analogRead(pot3);
   potBPM = analogRead(pot4);
 
+  // IE RATIO CALCULATION
+  minVol = 0; // arbitrary minimum volume is 0 mL currently
+  maxVol = 800; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
+  //    Vol = 500;
 
-  Serial.print("pot1 = ");
+int  lastVol = Vol;
+  Vol = map(potVol, 0, 1023, minVol, maxVol); // NOTE: minVol and maxVol have not been set yet
+  //    BPM = 10;
+
+  if (abs(lastVol - Vol) <= 5) {
+    Vol = lastVol;
+  }
+  Serial.println ("Volume = " + Vol);
+
+  BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30 (12-16 target with breathing interval 5 seconds)
+  //    Ex = 2;
+  unsigned int Breathing_Period = 5000; // 5 seconds
+  unsigned int TargetInhale = 1500; //1.5 second
+
+  Breathing_Period = 60 / BPM * 1000; // mils of Breathing period
+  Serial.println ("Period = " + char (Breathing_Period));
+
+
+  Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6 (ratio 2 is target)
+
+
+  v_set = Vol; // set volume is just pot volume
+  v_set = 400; // set volume is just pot volume
+
+
+  In_t = (60 / BPM) / (Ex + 1); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
+  Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
+
+  breathlength_in = In_t * 1000; // convert In_t to milliseconds for arudino delay
+  breathlength_out = Ex_t * 1000; // convert Ex_T to milliseconds for arduino delay
+  //---------------------------------
+  //    Mode = false;
+
+  screen();
+
+  Serial.print("potIE = ");
   Serial.println(potIE);
-  Serial.print("pot2 = ");
+  Serial.print("potVol = ");
   Serial.println(potVol);
-  Serial.print("pot3 = ");
+  Serial.print("potSens = ");
   Serial.println(potSens);
-  Serial.print("pot4 = ");
+  Serial.print("potBPM = ");
   Serial.println(potBPM);
 
   // CHECK MODE
   AC = digitalRead(blueswitch);
   full = digitalRead(yellswitch);
-  
- //DEBOUNCE AC
- // If the switch changed, due to noise or pressing:
+
+  //DEBOUNCE AC
+  // If the switch changed, due to noise or pressing:
   if (AC != lastButtonState) {
     // reset the debouncing timer
     lastDebounceTime = millis();
@@ -238,10 +277,10 @@ void loop() {
     // if the button state has changed:
     if (AC != buttonState) {
       buttonState = AC;
-      }
     }
-//DEBOUNCE FULL
-     // If the switch changed, due to noise or pressing:
+  }
+  //DEBOUNCE FULL
+  // If the switch changed, due to noise or pressing:
   if (full != lastButtonStateFULL) {
     // reset the debouncing timer
     lastDebounceTimeFULL = millis();
@@ -254,13 +293,10 @@ void loop() {
     // if the button state has changed:
     if (full != buttonStateFULL) {
       buttonStateFULL = full;
-      }
     }
-     
+  }
 
 
-
-  
 
   if ( AC == HIGH || full == HIGH) {
     SystemRunning = true;
@@ -285,38 +321,39 @@ void loop() {
 
   if (SystemRunning == true) {
 
-    // IE RATIO CALCULATION
-    minVol = 0; // arbitrary minimum volume is 0 mL currently
-    maxVol = 800; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
-    //    Vol = 500;
-    Vol = map(potVol, 0, 1023, minVol, maxVol); // NOTE: minVol and maxVol have not been set yet
-    //    BPM = 10;
-        Serial.println ("Volume = " + Vol);
+    //    // IE RATIO CALCULATION
+    //    minVol = 0; // arbitrary minimum volume is 0 mL currently
+    //    maxVol = 800; // arbitrary maximum volume is 2000 mL currentlyVol = map(500, 0, 1023, minVol, maxVol);
+    //    //    Vol = 500;
+    //    Vol = map(potVol, 0, 1023, minVol, maxVol); // NOTE: minVol and maxVol have not been set yet
+    //    //    BPM = 10;
+    //        Serial.println ("Volume = " + Vol);
+    //
+    //    BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30 (12-16 target with breathing interval 5 seconds)
+    //    //    Ex = 2;
+    //    unsigned int Breathing_Period = 5000; // 5 seconds
+    //    unsigned int TargetInhale = 1500; //1.5 second
+    //
+    //    Breathing_Period = 60 / BPM * 1000; // mils of Breathing period
+    //    Serial.println ("Period = " + char (Breathing_Period));
+    //
+    //
+    //    Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6 (ratio 2 is target)
+    //
+    //
+    //    v_set = Vol; // set volume is just pot volume
+    //    v_set = 400; // set volume is just pot volume
+    //
+    //
+    //    In_t = (60 / BPM) / (Ex + 1); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
+    //    Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
+    //
+    //    breathlength_in = In_t * 1000; // convert In_t to milliseconds for arudino delay
+    //    breathlength_out = Ex_t * 1000; // convert Ex_T to milliseconds for arduino delay
+    //    //---------------------------------
+    //    //    Mode = false;
+    //   screen();
 
-    BPM = map(potBPM, 0, 1023, 5, 30); // BPM scaled from 5 to 30 (12-16 target with breathing interval 5 seconds)
-    //    Ex = 2;
-    unsigned int Breathing_Period = 5000; // 5 seconds
-    unsigned int TargetInhale = 1500; //1.5 second
-
-    Breathing_Period = 60 / BPM * 1000; // mils of Breathing period
-    Serial.println ("Period = " + char (Breathing_Period));
-
-
-    Ex = map(potIE, 0, 1023, 1, 6); // IE ratio ranges from 1:1 to 1:6 (ratio 2 is target)
-
-
-    v_set = Vol; // set volume is just pot volume
-    v_set = 400; // set volume is just pot volume
-
-
-    In_t = (60 / BPM) / (Ex + 1); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
-    Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
-
-    breathlength_in = In_t * 1000; // convert In_t to milliseconds for arudino delay
-    breathlength_out = Ex_t * 1000; // convert Ex_T to milliseconds for arduino delay
-    //---------------------------------
-    //    Mode = false;
-   screen();
     if (Mode == true) {
       Serial.println("AC");
       digitalWrite(blue, LOW);
@@ -354,6 +391,12 @@ void loop() {
       //      normalize = sensor.flow() * -1;
       //    }
       // Mode Setting and LED color
+      // CHECK POTS
+      potIE = analogRead(pot2);
+      potVol = analogRead(pot1);
+      potSens = analogRead(pot3);
+      potBPM = analogRead(pot4);
+      screen();
 
       DateTime starttime = rtc.now();
 
@@ -375,7 +418,7 @@ void loop() {
       multiplier = 3750; //3606
       unsigned long current = millis();
       int i = 0;
-     while (current - Inhale <= Breathing_Period) {
+      while (current - Inhale <= Breathing_Period) {
         while (current - Inhale <= TargetInhale) {
           if (sensor.readSensor() == 0) {
             flowrate = (sensor.flow() + normalize) / 60 * multiplier; // get flowrate from sensor and convert from mL/min to mL/s
@@ -384,12 +427,12 @@ void loop() {
 
             //Serial.print("\t flowrate:");
             //Serial.println(flowrate);
-  Serial.print("while inhaling!");
+            Serial.print("while inhaling!");
           }
           //time_elapsed = current - previous; // determine time in milliseconds from beginning to pump air to now
           if (flowrate <= 0) {
             flowrate = flowrate * -1;
-              Serial.print("flowrateeeeee!");
+            Serial.print("flowrateeeeee!");
           }
           v_trans = flowrate * 100;
           v_calc = v_calc + v_trans; // add to counter of total volume pumped
@@ -398,8 +441,8 @@ void loop() {
           //time_breath = time_breath + time_elapsed; // add to counter of how long it took to breathe in
           delay(100);
           current = millis();
-            Serial.print("vcalc anyone?!");
-          
+          Serial.print("vcalc anyone?!");
+
         }//end Target Inhale
 
 
@@ -444,6 +487,6 @@ void loop() {
     }// end of breathing period
     Mode = false;
   } //FULL MODE OUT
- lastButtonState = AC;
+  lastButtonState = AC;
   lastButtonStateFULL = full;
 }
