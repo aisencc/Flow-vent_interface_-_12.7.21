@@ -246,11 +246,11 @@ void loop() {
   v_set = 400; // set volume is just pot volume
 
 
-  In_t = (60 / BPM) / (Ex + 1); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
+  In_t = (Breathing_Period ) / (2*(Ex + 1)); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
   Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
 
-  breathlength_in = In_t * 1000; // convert In_t to milliseconds for arudino delay
-  breathlength_out = Ex_t * 1000; // convert Ex_T to milliseconds for arduino delay
+  TargetInhale = In_t; // convert In_t to milliseconds for arudino delay
+  breathlength_out = Ex_t; // convert Ex_T to milliseconds for arduino delay
   //---------------------------------
   //    Mode = false;
 
@@ -396,13 +396,13 @@ void loop() {
       //    if (sensor.readSensor() == 0) {
       //      normalize = sensor.flow() * -1;
       //    }
-//      // Mode Setting and LED color
-//      // CHECK POTS
-//      potIE = analogRead(pot2);
-//      potVol = analogRead(pot1);
-//      potSens = analogRead(pot3);
-//      potBPM = analogRead(pot4);
-//      screen();
+      //      // Mode Setting and LED color
+      //      // CHECK POTS
+      //      potIE = analogRead(pot2);
+      //      potVol = analogRead(pot1);
+      //      potSens = analogRead(pot3);
+      //      potBPM = analogRead(pot4);
+      //      screen();
 
       DateTime starttime = rtc.now();
 
