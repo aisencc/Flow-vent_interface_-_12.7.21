@@ -243,11 +243,13 @@ void loop() {
   }
 
   v_set = Vol; // set volume is just pot volume
-  v_set = 400; // set volume is just pot volume
+  //  v_set = 400; // set volume is just pot volume
 
 
-  In_t = (Breathing_Period ) / (2*(Ex + 1)); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
-  Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
+    In_t = (Breathing_Period) / (Ex + 1); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
+    Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
+
+
 
   TargetInhale = In_t; // convert In_t to milliseconds for arudino delay
   breathlength_out = Ex_t; // convert Ex_T to milliseconds for arduino delay
@@ -448,51 +450,56 @@ void loop() {
           delay(100);
           current = millis();
           Serial.print("vcalc anyone?!");
+          if (v_calc < Vol) {
+            //put in that the inhale time needs to be more than zero and less than half the breathing period AKA 1:1 IE
+          }
 
         }//end Target Inhale
 
 
         //Serial.print("Inhale2");
         current = millis(); // get current time
-      }// end Inhale target
-      //Hold 1
-      digitalWrite(airvalve, LOW);
-      digitalWrite(vacvalve, LOW);
-      digitalWrite(red1, LOW);
-      digitalWrite(red2, LOW);
-      delay (100); // let valve shut
-      // Exhale
-      Serial.println("Exhale");
-      digitalWrite(airvalve, LOW);
-      digitalWrite(vacvalve, HIGH);
-      digitalWrite(red1, LOW);
-      digitalWrite(red2, HIGH);
-      delay(breathlength_out);
+        // end Inhale target
+        //Hold 1
+        digitalWrite(airvalve, LOW);
+        digitalWrite(vacvalve, LOW);
+        digitalWrite(red1, LOW);
+        digitalWrite(red2, LOW);
+        delay (100); // let valve shut
+        // Exhale
+        Serial.println("Exhale");
+        digitalWrite(airvalve, LOW);
+        digitalWrite(vacvalve, HIGH);
+        digitalWrite(red1, LOW);
+        digitalWrite(red2, HIGH);
+        delay(breathlength_out);
 
-      Serial.println("B-OUT" +  char(breathlength_out));
-      Serial.println("B-IN" + char(breathlength_in));
-      Serial.println("B-OUT" + char(breathlength_hold));
-      // Hold
-      digitalWrite(airvalve, LOW);
-      digitalWrite(vacvalve, LOW);
-      digitalWrite(red1, LOW);
-      digitalWrite(red2, LOW);
-      breathlength_hold = (Inhale + Breathing_Period) - millis();
-      if (breathlength_hold < 0) {
-        breathlength_hold = 0;
-      }
-      //
-      if (starttime.second() + 20  > now.second()) {
-        Serial.println(starttime.second());
-        Serial.println("drag: " + now.second());
-        //5 seconds is period
-        Mode = false;
-        return;
-      }// end of start time break
-      delay(breathlength_hold);
-    }// end of breathing period
+        Serial.println("B-OUT" +  char(breathlength_out));
+        Serial.println("B-IN" + char(breathlength_in));
+        Serial.println("B-OUT" + char(breathlength_hold));
+        // Hold
+        digitalWrite(airvalve, LOW);
+        digitalWrite(vacvalve, LOW);
+        digitalWrite(red1, LOW);
+        digitalWrite(red2, LOW);
+        breathlength_hold = (Inhale + Breathing_Period) - millis();
+        if (breathlength_hold < 0) {
+          breathlength_hold = 0;
+        }
+        //
+        if (starttime.second() + 20  > now.second()) {
+          Serial.println(starttime.second());
+          Serial.println("drag: " + now.second());
+          //5 seconds is period
+          Mode = false;
+          return;
+        }// end of start time break
+        delay(breathlength_hold);
+      }// end of breathing period
+
     Mode = false;
   } //FULL MODE OUT
   lastButtonState = AC;
   lastButtonStateFULL = full;
+}
 }
