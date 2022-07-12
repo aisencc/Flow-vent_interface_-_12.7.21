@@ -81,6 +81,9 @@ float breathlength_in; // time for breath in, basically In_t * 1000
 float breathlength_hold; // time to hold in
 float breathlength_out; // time for breath out, basically Ex_t * 1000
 
+  unsigned int Breathing_Period = 5000; // 5 seconds
+  unsigned int TargetInhale = 1500; //1.5 second
+
 int multiplier;
 
 // PINS
@@ -187,6 +190,7 @@ void setup() {
 
   lcd.print("Hello, I'm Eurus!"); // print a message to the LCD.
 
+
   delay(1000);
 }
 
@@ -230,8 +234,8 @@ void loop() {
   if (abs(lastBPM - BPM) <= 1) {
     BPM = lastBPM;
   }
-  unsigned int Breathing_Period = 5000; // 5 seconds
-  unsigned int TargetInhale = 1500; //1.5 second
+  //unsigned int Breathing_Period = 5000; // 5 seconds
+  //unsigned int TargetInhale = 1500; //1.5 second
 
   Breathing_Period = 60 / BPM * 1000; // mils of Breathing period
   Serial.println ("Period = " + char (Breathing_Period));
@@ -245,19 +249,29 @@ void loop() {
   v_set = Vol; // set volume is just pot volume
   //  v_set = 400; // set volume is just pot volume
 
-
-    In_t = (Breathing_Period) / (Ex + 1); //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
-    Ex_t = Ex * In_t; // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
-
-
-
+if(TargetInhale + TargetInhale * Ex > Breathing_Period){
+  In_t = (Breathing_Period) / 3; 
   TargetInhale = In_t; // convert In_t to milliseconds for arudino delay
+  Ex_t = 2 * In_t;
+}
+else{
+  In_t = (Breathing_Period) / (Ex + 1); 
+  TargetInhale = In_t;
+  Ex_t = Ex * TargetInhale;
+}
+    //(60/ BPM) is time per breath in seconds / (Ex + In) is total ratio amount, output in seconds. ONLY works if In is 1.
+    // exhalation time is the inverse IE ratio times inhalation time, output in seconds.
+
+
+
+  
   breathlength_out = Ex_t; // convert Ex_T to milliseconds for arduino delay
+  
   //---------------------------------
   //    Mode = false;
 
   screen();
-
+  //liveScreen();
   Serial.print("potIE = ");
   Serial.println(potIE);
   Serial.print("potVol = ");
@@ -447,12 +461,13 @@ void loop() {
           Serial.print("VCalc\t");
           Serial.println(v_calc);
           //time_breath = time_breath + time_elapsed; // add to counter of how long it took to breathe in
+          liveScreen();
           delay(100);
           current = millis();
           Serial.print("vcalc anyone?!");
-          if (v_calc < Vol) {
-            //put in that the inhale time needs to be more than zero and less than half the breathing period AKA 1:1 IE
-          }
+//          if (v_calc < Vol) {
+//            //put in that the inhale time needs to be more than zero and less than half the breathing period AKA 1:1 IE
+//          }
 
         }//end Target Inhale
 
